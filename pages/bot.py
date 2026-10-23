@@ -18,7 +18,7 @@ st.set_page_config(page_title="WhatsApp Bot | Ranz Studio", page_icon="⌘", lay
 BASE_DIR = Path(__file__).resolve().parents[1]
 BOT_DIR = BASE_DIR / "BOT_WA_TERBARU"
 BOT_URL = "http://127.0.0.1:3000"
-MIN_FREE_MEMORY_MB = 512
+MIN_FREE_MEMORY_MB = 256
 WA_NUMBER = "6282183317690"
 
 
@@ -44,6 +44,12 @@ def available_memory_mb():
     if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(memory_status)):
         return None
     return memory_status.ullAvailPhys // (1024 * 1024)
+
+
+def local_network_ip():
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route_probe:
+        route_probe.connect(("192.0.2.1", 80))
+        return route_probe.getsockname()[0]
 
 
 @st.cache_resource
@@ -78,6 +84,8 @@ def start_local_bot(manager):
     if not (BOT_DIR / ".env").is_file():
         raise RuntimeError("Konfigurasi lokal BOT_WA_TERBARU/.env belum tersedia.")
 
+    bot_host = local_network_ip()
+    bot_url = f"http://{bot_host}:3000"
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as port_check:
         if port_check.connect_ex(("127.0.0.1", 3000)) == 0:
             raise RuntimeError("Port 3000 sudah digunakan. Pastikan tidak ada server lain yang berjalan.")
@@ -89,7 +97,7 @@ def start_local_bot(manager):
     environment.update(
         {
             "ENABLE_CLOUDFLARE_TUNNEL": "false",
-            "HOST": "127.0.0.1",
+            "HOST": bot_host,
             "PORT": "3000",
         }
     )
@@ -117,13 +125,14 @@ def start_local_bot(manager):
                 f"Periksa log lokal: {log_path}"
             )
         try:
-            with urlopen(f"{BOT_URL}/api/port", timeout=1):
+            with urlopen(f"{bot_url}/api/port", timeout=1):
                 return
         except URLError:
             time.sleep(0.5)
 
+    stop_local_bot(manager)
     raise RuntimeError(
-        f"Bot belum merespons di {BOT_URL} setelah 10 detik. "
+        f"Bot belum merespons di {bot_url} setelah 10 detik. "
         f"Periksa log lokal: {log_path}"
     )
 
@@ -217,12 +226,10 @@ if platform.system() != "Windows":
         st.button("■  Hentikan bot", disabled=True, width="stretch")
     with status_col:
         st.metric("Status", "Kontrol lokal saja")
-        st.link_button("Buka dashboard bot · port 3000 ↗", BOT_URL, width="stretch")
         st.caption(
-            "Aplikasi ini sedang berjalan di server Streamlit Cloud. "
-            "Tautan membuka port lokal laptop ini dan hanya berfungsi jika bot sudah "
-            "berjalan di laptop yang sama. Cloud tidak dapat menyalakan bot. Jalankan "
-            "home.py di Windows untuk mengaktifkan tombol kontrol."
+            "Aplikasi ini berjalan di Streamlit Cloud dan tidak dapat membuka port "
+            "laptop Anda. Untuk akses ponsel, buka alamat IP laptop pada port 3000 "
+            "saat laptop dan ponsel tersambung ke hotspot yang sama."
         )
 else:
     manager = get_bot_manager()
@@ -281,9 +288,13 @@ else:
                 st.rerun()
     with status_col:
         st.metric("Status bot", "Berjalan" if running else "Berhenti")
-        st.link_button("Buka dashboard bot · port 3000 ↗", BOT_URL, width="stretch")
+        try:
+            lan_bot_url = f"http://{local_network_ip()}:3000"
+            st.link_button("Buka dashboard bot dari ponsel ↗", lan_bot_url, width="stretch")
+        except OSError as error:
+            st.error(f"Alamat jaringan lokal tidak dapat dibaca: {error}")
         if not running:
-            st.caption("Bot berjalan di laptop ini saja, bukan di Streamlit Cloud.")
+            st.caption("Bot berjalan di laptop ini; pastikan ponsel menggunakan hotspot yang sama.")
 
 if "bot_last_exit_code" in st.session_state:
     st.error(
@@ -323,8 +334,8 @@ for start in (0, 3):
     st.write("")
     st.markdown(
     '<div class="notice">Bot berjalan langsung di Windows, bukan di Streamlit Cloud. '
-    'Cloudflare Tunnel dipaksa nonaktif saat Streamlit menyalakan bot; dashboard hanya dibuka '
-    'melalui <code>127.0.0.1</code>. Berkas `.env`, sesi WhatsApp, database, dan log tidak '
+    'Cloudflare Tunnel dipaksa nonaktif saat Streamlit menyalakan bot; dashboard dapat dibuka '
+    'melalui IP laptop pada jaringan lokal yang sama. Berkas `.env`, sesi WhatsApp, database, dan log tidak '
     'boleh diunggah ke GitHub.</div>',
     unsafe_allow_html=True,
 )
