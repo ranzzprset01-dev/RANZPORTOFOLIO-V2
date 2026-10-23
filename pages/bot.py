@@ -202,9 +202,94 @@ st.markdown(
 )
 st.markdown(
     '<p class="page-copy">Bot WhatsApp dengan menu interaktif, fitur AI, permainan grup, '
-    'dan tools praktis. Halaman ini memperkenalkan project bot yang terpisah dari website portofolio.</p>',
+    'dan tools praktis. Kontrol di bawah dapat menjalankan bot saat Streamlit dibuka langsung '
+    'di laptop Windows.</p>',
     unsafe_allow_html=True,
 )
+
+st.markdown('<div class="eyebrow">Kontrol BOT</div>', unsafe_allow_html=True)
+st.subheader("Status dan kontrol WhatsApp bot")
+
+if platform.system() != "Windows":
+    control_col, status_col = st.columns([1, 1], gap="medium")
+    with control_col:
+        st.button("▶  Jalankan bot", disabled=True, width="stretch")
+        st.button("■  Hentikan bot", disabled=True, width="stretch")
+    with status_col:
+        st.metric("Status", "Kontrol lokal saja")
+        st.caption(
+            "Aplikasi ini sedang berjalan di server Streamlit Cloud. "
+            "Cloud tidak dapat menyalakan proses di laptop Anda. Jalankan home.py "
+            "di Windows untuk mengaktifkan tombol kontrol."
+        )
+else:
+    manager = get_bot_manager()
+    st.session_state.setdefault("bot_autostart_paused", False)
+    process = manager["process"]
+
+    if process is not None and process.poll() is not None:
+        exit_code = process.returncode
+        stop_local_bot(manager)
+        st.session_state["bot_last_exit_code"] = exit_code
+        st.session_state["bot_autostart_paused"] = True
+
+    if manager["process"] is None and not st.session_state["bot_autostart_paused"]:
+        free_memory_mb = available_memory_mb()
+        if free_memory_mb is None:
+            st.warning("Status RAM tidak dapat dibaca; auto-start bot ditahan.")
+        elif free_memory_mb < MIN_FREE_MEMORY_MB:
+            st.warning(
+                f"Bot belum dinyalakan untuk menjaga laptop tetap responsif. "
+                f"RAM tersedia {free_memory_mb} MB; minimal {MIN_FREE_MEMORY_MB} MB. "
+                "Tutup aplikasi lain, lalu muat ulang halaman ini."
+            )
+        else:
+            try:
+                with st.spinner("Menyalakan bot lokal..."):
+                    start_local_bot(manager)
+                st.session_state.pop("bot_last_exit_code", None)
+            except (OSError, RuntimeError) as error:
+                st.error(f"Bot gagal dijalankan: {error}")
+
+    process = manager["process"]
+    running = process is not None and process.poll() is None
+    control_col, status_col = st.columns([1, 1], gap="medium")
+    with control_col:
+        start_col, stop_col = st.columns(2, gap="small")
+        with start_col:
+            if st.button("▶  Jalankan bot", disabled=running, width="stretch"):
+                free_memory_mb = available_memory_mb()
+                if free_memory_mb is None or free_memory_mb < MIN_FREE_MEMORY_MB:
+                    st.error(
+                        f"RAM tersedia harus minimal {MIN_FREE_MEMORY_MB} MB untuk memulai bot."
+                    )
+                else:
+                    try:
+                        with st.spinner("Menyalakan bot lokal..."):
+                            start_local_bot(manager)
+                        st.session_state["bot_autostart_paused"] = False
+                        st.session_state.pop("bot_last_exit_code", None)
+                        st.rerun()
+                    except (OSError, RuntimeError) as error:
+                        st.error(f"Bot gagal dijalankan: {error}")
+        with stop_col:
+            if st.button("■  Hentikan bot", disabled=not running, width="stretch"):
+                stop_local_bot(manager)
+                st.session_state["bot_autostart_paused"] = True
+                st.rerun()
+    with status_col:
+        st.metric("Status bot", "Berjalan" if running else "Berhenti")
+        if running:
+            st.link_button("Buka dashboard bot ↗", BOT_URL, width="stretch")
+        else:
+            st.caption("Bot berjalan di laptop ini saja, bukan di Streamlit Cloud.")
+
+if "bot_last_exit_code" in st.session_state:
+    st.error(
+        f"Bot berhenti dengan exit code {st.session_state['bot_last_exit_code']}. "
+        f"Periksa log lokal: {BOT_DIR / 'logs' / 'streamlit-launch.log'}"
+    )
+
 st.link_button(
     "Tanya tentang bot ↗",
     f"https://wa.me/{WA_NUMBER}?text={quote('Halo Ranz, saya ingin tahu lebih lanjut tentang WhatsApp Bot RANZZXITER.')}",
@@ -235,111 +320,7 @@ for start in (0, 3):
                 unsafe_allow_html=True,
             )
     st.write("")
-
-st.markdown('<div class="eyebrow">Informasi project</div>', unsafe_allow_html=True)
-st.subheader("Kontrol bot lokal dari Streamlit.")
-
-if platform.system() != "Windows":
-    st.info(
-        "Auto-start hanya aktif di Windows lokal. Streamlit Cloud berjalan di Linux dan "
-        "tidak dapat mengakses bot atau sesi WhatsApp di laptop ini."
-    )
-elif not BOT_DIR.is_dir():
-    st.error(f"Folder bot tidak ditemukan: {BOT_DIR}")
-else:
-    manager = get_bot_manager()
-    st.session_state.setdefault("bot_autostart_paused", False)
-    process = manager["process"]
-
-    if process is not None and process.poll() is not None:
-        exit_code = process.returncode
-        stop_local_bot(manager)
-        st.session_state["bot_last_exit_code"] = exit_code
-        st.session_state["bot_autostart_paused"] = True
-
-    if manager["process"] is None and not st.session_state["bot_autostart_paused"]:
-        free_memory_mb = available_memory_mb()
-        if free_memory_mb is None:
-            st.warning("Status RAM tidak dapat dibaca; auto-start bot ditahan.")
-        elif free_memory_mb < MIN_FREE_MEMORY_MB:
-            st.warning(
-                f"Bot belum dinyalakan untuk menjaga laptop tetap responsif. "
-                f"RAM tersedia {free_memory_mb} MB; minimal {MIN_FREE_MEMORY_MB} MB. "
-                "Tutup aplikasi lain, lalu muat ulang halaman ini."
-            )
-        else:
-            try:
-                with st.spinner("Menyalakan bot lokal..."):
-                    start_local_bot(manager)
-                st.session_state.pop("bot_last_exit_code", None)
-                st.success("Bot aktif di laptop ini.")
-            except (OSError, RuntimeError) as error:
-                st.error(f"Bot gagal dijalankan: {error}")
-
-    process = manager["process"]
-    running = process is not None and process.poll() is None
-    status_col, address_col = st.columns(2)
-    with status_col:
-        st.metric("Status bot", "Berjalan" if running else "Berhenti")
-    with address_col:
-        st.metric("Dashboard lokal", "Port 3000")
-
-    if "bot_last_exit_code" in st.session_state:
-        st.error(
-            f"Bot berhenti dengan exit code {st.session_state['bot_last_exit_code']}. "
-            f"Periksa log lokal: {BOT_DIR / 'logs' / 'streamlit-launch.log'}"
-        )
-
-    action_col, dashboard_col = st.columns([1, 1])
-    with action_col:
-        if running:
-            if st.button("Hentikan bot", use_container_width=True):
-                stop_local_bot(manager)
-                st.session_state["bot_autostart_paused"] = True
-                st.rerun()
-        elif st.button("Jalankan bot", use_container_width=True):
-            free_memory_mb = available_memory_mb()
-            if free_memory_mb is None or free_memory_mb < MIN_FREE_MEMORY_MB:
-                st.error(
-                    f"RAM tersedia harus minimal {MIN_FREE_MEMORY_MB} MB untuk memulai bot."
-                )
-            else:
-                try:
-                    with st.spinner("Menyalakan bot lokal..."):
-                        start_local_bot(manager)
-                    st.session_state["bot_autostart_paused"] = False
-                    st.session_state.pop("bot_last_exit_code", None)
-                    st.rerun()
-                except (OSError, RuntimeError) as error:
-                    st.error(f"Bot gagal dijalankan: {error}")
-    with dashboard_col:
-        if running:
-            st.link_button(
-                "Buka dashboard bot ↗",
-                BOT_URL,
-                width="stretch",
-            )
-
-    if running:
-        try:
-            with urlopen(f"{BOT_URL}/api/port", timeout=2) as response:
-                if response.status == 200:
-                    st.success(
-                        "Dashboard lokal siap. Buka melalui tombol di atas dan masuk "
-                        "menggunakan password dashboard yang disimpan di file lokal `.env`."
-                    )
-        except (OSError, URLError):
-            st.warning(
-                "Proses bot masih berjalan, tetapi dashboard belum merespons. "
-                "Periksa log lokal sebelum mencoba lagi."
-            )
-    else:
-        st.caption(
-            "Saat halaman ini dibuka di laptop Windows, bot akan auto-start jika RAM tersedia "
-            f"minimal {MIN_FREE_MEMORY_MB} MB. Bot tetap lokal dan berhenti saat dimatikan dari sini."
-        )
-
-st.markdown(
+    st.markdown(
     '<div class="notice">Bot berjalan langsung di Windows, bukan di Streamlit Cloud. '
     'Cloudflare Tunnel dipaksa nonaktif saat Streamlit menyalakan bot; dashboard hanya dibuka '
     'melalui <code>127.0.0.1</code>. Berkas `.env`, sesi WhatsApp, database, dan log tidak '
