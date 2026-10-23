@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101116">
+  <meta name="description" content="Ranz Studio WhatsApp Bot dashboard">
+  <title>Ranz Studio | WhatsApp Bot Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- Owner dashboard access gate -->
+  <div class="cyber-lock-gate" id="lockGate">
+    <div class="lock-panel">
+      <div class="lock-icon-glow">🔒</div>
+      <h2 class="lock-title">RANZZXITER // OWNER ACCESS</h2>
+      <p class="lock-subtitle">RESTRICTED TERMINAL - MASTER AUTHENTICATION REQUIRED</p>
+      <div class="lock-form">
+        <div class="form-group">
+          <label>ENTER MASTER ACCESS KEY</label>
+          <input type="password" id="masterPasswordInput" class="cyber-input" placeholder="••••••••••••" autofocus autocomplete="current-password">
+        </div>
+        <button class="btn-cyber-primary" id="btnUnlockDashboard" style="width: 100%; margin-top: 15px; font-size: 1rem; padding: 12px;">
+          ⚡ DECRYPT & ACCESS SYSTEM
+        </button>
+        <div class="lock-warning" id="lockWarningMsg"></div>
+      </div>
+      <div class="lock-footer">
+        <span>🛡️ FAIL2BAN PROTOCOL ACTIVE</span> • <span>MAX 5 ATTEMPTS</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cyberpunk Background Grid & Glow Effects -->
+  <div class="cyber-bg-grid"></div>
+  <div class="cyber-ambient-glow glow-cyan"></div>
+  <div class="cyber-ambient-glow glow-magenta"></div>
+  <div class="scanline-overlay"></div>
+
+  <!-- Main Container -->
+  <div class="app-wrapper">
+    <!-- Top Futuristic HUD Header -->
+    <header class="hud-header">
+      <div class="header-branding">
+        <div class="core-orb">
+          <div class="core-orb-inner"></div>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">RANZZXITER <span class="neon-cyan">STUDIO</span></div>
+          <div class="brand-sub">WHATSAPP BOT DASHBOARD · v2.0</div>
+        </div>
+      </div>
+
+      <!-- Real-time HUD Chips -->
+      <div class="hud-telemetry">
+        <div class="hud-chip">
+          <span class="chip-label">SYSTEM STATUS</span>
+          <span class="chip-val status-badge" id="hudStatus">
+            <span class="pulse-dot"></span> <span id="hudStatusText">INITIALIZING</span>
+          </span>
+        </div>
+        <div class="hud-chip">
+          <span class="chip-label">ACTIVE NUMBER</span>
+          <span class="chip-val text-cyan" id="hudBotNumber">-</span>
+        </div>
+        <div class="hud-chip">
+          <span class="chip-label">UPTIME</span>
+          <span class="chip-val text-magenta" id="hudUptime">00:00:00</span>
+        </div>
+        <div class="hud-chip">
+          <span class="chip-label">LATENCY</span>
+          <span class="chip-val text-green" id="hudLatency">12 ms</span>
+        </div>
+        <div class="hud-chip">
+          <span class="chip-label">PORT</span>
+          <span class="chip-val text-cyan" id="hudPort">3000</span>
+        </div>
+        <div class="hud-chip" id="hudTunnelChip">
+          <span class="chip-label">CF TUNNEL</span>
+          <span class="chip-val text-gold" id="hudTunnelStatus">CONNECTING...</span>
+        </div>
+      </div>
+
+      <!-- Action Toggles -->
+      <div class="header-actions">
+        <button class="btn-icon" id="soundToggleBtn" title="Toggle UI Sound FX">🔊</button>
+        <button class="btn-cyber-primary" id="btnRestartBot">⚡ RESTART CORE</button>
+        <button class="btn-action-small" id="btnLockConsole" style="border-color: #ff007f; color: #ff007f;" title="Kunci Dashboard dengan Master Password">🔒 KUNCI</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="hud-nav">
+      <button class="nav-tab active" data-tab="tab-control">
+        <span class="tab-icon">🎛️</span> KONTROL & SCANNER
+      </button>
+      <button class="nav-tab" data-tab="tab-sentinel">
+        <span class="tab-icon">🛰️</span> SENTINEL & IP TRACKER
+      </button>
+      <button class="nav-tab" data-tab="tab-ai">
+        <span class="tab-icon">🧠</span> AI CONFIGURATION
+      </button>
+      <button class="nav-tab" data-tab="tab-database">
+        <span class="tab-icon">💾</span> DATABASE & USERS
+      </button>
+      <button class="nav-tab" data-tab="tab-logs">
+        <span class="tab-icon">📟</span> LIVE MATRIX LOGS
+      </button>
+      <button class="nav-tab" data-tab="tab-features">
+        <span class="tab-icon">🎮</span> FITUR & SIMULATOR
+      </button>
+    </nav>
+
+    <!-- Tab Contents -->
+    <main class="hud-content">
+      
+      <!-- ================= TAB 1: KONTROL & SCANNER ================= -->
+      <section class="tab-pane active" id="tab-control">
+        <div class="grid-2-col">
+          <!-- WhatsApp QR & Pairing Card -->
+          <div class="cyber-card">
+            <div class="card-header">
+              <span class="card-tag">AUTHENTICATION</span>
+              <h2 class="card-title">WHATSAPP QUANTUM LINK</h2>
+            </div>
+            <div class="card-body auth-grid">
+              <!-- QR Code Display Area -->
+              <div class="qr-container">
+                <div class="qr-frame" id="qrFrame">
+                  <div class="qr-scanner-line"></div>
+                  <img id="qrImage" src="" alt="Scan QR Code" style="display: none;">
+                  <div class="qr-placeholder" id="qrPlaceholder">
+                    <div class="spinner-cyber"></div>
+                    <p id="qrStatusMsg">Menghubungkan ke Quantum WhatsApp...</p>
+                  </div>
+                </div>
+                <div class="qr-instruction">
+                  <p>1. Buka <strong>WhatsApp</strong> di HP Anda</p>
+                  <p>2. Ketuk <strong>Titik Tiga</strong> / <strong>Setelan</strong> &gt; <strong>Perangkat Tertaut</strong></p>
+                  <p>3. Ketuk <strong>Tautkan Perangkat</strong> lalu arahkan kamera ke QR di atas</p>
+                </div>
+              </div>
+
+              <!-- Alternative: Pairing Code -->
+              <div class="pairing-box">
+                <h3 class="box-title">ATAU TAUTKAN VIA KODE PAIRING (TANPA SCAN)</h3>
+                <p class="box-desc">Masukkan nomor WhatsApp HP Anda untuk menerima 8 digit kode konfirmasi langsung di aplikasi WhatsApp Anda:</p>
+                <div class="input-group">
+                  <input type="text" id="pairingPhoneInput" placeholder="Contoh: 6281234567890" class="cyber-input">
+                  <button class="btn-cyber-cyan" id="btnRequestPairing">MINTA KODE</button>
+                </div>
+                <div class="pairing-code-display" id="pairingCodeDisplay" style="display: none;">
+                  <span class="label">KODE PAIRING ANDA:</span>
+                  <div class="code-digits" id="pairingCodeDigits">---- ----</div>
+                  <small>Buka notifikasi di WhatsApp Anda dan masukkan 8 karakter di atas.</small>
+                </div>
+                <div class="auth-buttons">
+                  <button class="btn-cyber-danger" id="btnLogoutSession">LOGOUT & RESET SESI</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Command Center & Messenger -->
+          <div class="cyber-card">
+            <div class="card-header">
+              <span class="card-tag">TRANSMITTER</span>
+              <h2 class="card-title">KIRIM PESAN & BROADCAST</h2>
+            </div>
+            <div class="card-body">
+              <!-- Single Message -->
+              <div class="form-section">
+                <h4 class="section-title">✉️ Kirim Pesan Manual Langsung</h4>
+                <div class="form-group">
+                  <label>Nomor Target WhatsApp (dengan kode negara)</label>
+                  <input type="text" id="manualTargetInput" placeholder="628xxxxxxxxxx" class="cyber-input">
+                </div>
+                <div class="form-group">
+                  <label>Pesan</label>
+                  <textarea id="manualMessageInput" rows="2" placeholder="Ketik pesan yang ingin dikirim..." class="cyber-textarea"></textarea>
+                </div>
+                <button class="btn-cyber-cyan" id="btnSendManualMsg">KIRIM PESAN</button>
+              </div>
+
+              <hr class="cyber-divider">
+
+              <!-- Broadcast Announcement -->
+              <div class="form-section">
+                <h4 class="section-title">📢 Siaran Massal (Broadcast)</h4>
+                <div class="form-group">
+                  <label>Target Sasaran Siaran</label>
+                  <select id="broadcastTargetType" class="cyber-select">
+                    <option value="groups">Seluruh Grup Bot</option>
+                    <option value="users">Seluruh Kontak / Pengguna Terdaftar</option>
+                    <option value="all">Semua Grup & Kontak (Universal)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Teks Siaran Pengumuman</label>
+                  <textarea id="broadcastMessageInput" rows="2" placeholder="Pengumuman penting untuk semua sektor..." class="cyber-textarea"></textarea>
+                </div>
+                <button class="btn-cyber-magenta" id="btnSendBroadcast">LUNCURKAN SIARAN</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Metrics Counter Cards -->
+        <div class="grid-4-col metric-deck">
+          <div class="metric-card">
+            <div class="metric-icon">👥</div>
+            <div class="metric-info">
+              <div class="metric-val text-cyan" id="metricTotalUsers">0</div>
+              <div class="metric-title">TOTAL PENGGUNA TERDATA</div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">💬</div>
+            <div class="metric-info">
+              <div class="metric-val text-magenta" id="metricTotalMessages">0</div>
+              <div class="metric-title">PESAN DIPROSES</div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">🧠</div>
+            <div class="metric-info">
+              <div class="metric-val text-green" id="metricTotalAi">0</div>
+              <div class="metric-title">KONSULTASI AI</div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">🎮</div>
+            <div class="metric-info">
+              <div class="metric-val text-gold" id="metricTotalGames">0</div>
+              <div class="metric-title">RONDE GAME DIMAIN KAN</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB: SENTINEL & IP TRACKER ================= -->
+      <section class="tab-pane" id="tab-sentinel">
+        <!-- Sentinel Top Telemetry Grid -->
+        <div class="grid-3-col" style="margin-bottom: 25px;">
+          <!-- Card 1: Cloudflare Tunnel -->
+          <div class="cyber-card">
+            <div class="card-header">
+              <span class="card-tag">SECURE INGRESS</span>
+              <h3 class="card-title">🌐 CLOUDFLARE TUNNEL</h3>
+            </div>
+            <div class="card-body">
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+                Membuka rute akses publik terenkripsi SSL tanpa perlu port forwarding atau ekspos IP VPS asli.
+              </p>
+              <div id="tunnelStatusBox" style="margin-bottom: 12px;">
+                <span class="badge-tunnel-live" id="tunnelBadge">Memeriksa koneksi tunnel...</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-cyber-primary" id="btnToggleTunnel" style="font-size: 0.8rem; padding: 8px 12px;">🚀 MULAI TUNNEL</button>
+                <button class="btn-action-small" id="btnCopyTunnelUrl" style="display: none;">📋 SALIN LINK</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: VPS Firewall & Anti-Flood -->
+          <div class="cyber-card">
+            <div class="card-header">
+              <span class="card-tag">FIREWALL HARDENING</span>
+              <h3 class="card-title">🛡️ VPS SHIELD & ANTI-FLOOD</h3>
+            </div>
+            <div class="card-body">
+              <ul style="font-family: var(--font-mono); font-size: 0.8rem; list-style: none; line-height: 1.8;">
+                <li>🔒 <strong class="text-cyan">Port 3000:</strong> Terkunci (Localhost & Tunnel)</li>
+                <li>🛡️ <strong class="text-green">Anti-Flood:</strong> Rate Limit Max 70 Req / 20s</li>
+                <li>🎭 <strong class="text-magenta">Header Cloak:</strong> X-Powered-By Hidden</li>
+                <li>⚡ <strong class="text-gold">Security Headers:</strong> NoSniff + SameOrigin</li>
+              </ul>
+              <div style="margin-top: 10px;">
+                <span class="badge-paired-host">FIREWALL LOCKED (MAX SECURITY)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Fail2Ban Metrics -->
+          <div class="cyber-card">
+            <div class="card-header">
+              <span class="card-tag">INTRUSION DEFENSE</span>
+              <h3 class="card-title">🚨 FAIL2BAN IP JAIL</h3>
+            </div>
+            <div class="card-body">
+              <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px;">
+                <span style="font-family: var(--font-hud); font-size: 28px; color: var(--neon-red);" id="jailedCountDisplay">0</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">IP Sedang Diblokir</span>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">
+                IP yang salah memasukkan Master Password 5x atau flood otomatis dijebloskan ke penjara virtual selama 30 menit.
+              </p>
+              <button class="btn-jail-action" id="btnOpenManualJailModal">➕ BLOKIR IP SECARA MANUAL</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Visitor & IP Tracker Table -->
+        <div class="cyber-card" style="margin-bottom: 25px;">
+          <div class="card-header">
+            <span class="card-tag">REALTIME INGRESS SENTINEL</span>
+            <h2 class="card-title">🛰️ LIVE VISITOR IP TRACKER & GEOLOCATION</h2>
+          </div>
+          <div class="card-body">
+            <div class="table-actions">
+              <input type="text" id="visitorSearchInput" placeholder="Cari IP, negara, kota, atau ISP..." class="cyber-input" style="max-width: 320px;">
+              <button class="btn-cyber-cyan" id="btnRefreshVisitors">🔄 REFRESH SENTINEL</button>
+            </div>
+            <div class="table-responsive">
+              <table class="cyber-table" id="visitorsTable">
+                <thead>
+                  <tr>
+                    <th>WAKTU</th>
+                    <th>IP ADDRESS</th>
+                    <th>GEOLOKASI (NEGARA & KOTA)</th>
+                    <th>ISP / ORGANISASI</th>
+                    <th>ENDPOINT</th>
+                    <th>PERANGKAT / BROWSER</th>
+                    <th>STATUS</th>
+                    <th>AKSI</th>
+                  </tr>
+                </thead>
+                <tbody id="visitorsTableBody">
+                  <tr>
+                    <td colspan="8" class="text-center">Memuat riwayat ingress pengunjung...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fail2Ban Active Jails Table -->
+        <div class="cyber-card">
+          <div class="card-header">
+            <span class="card-tag">ISOLATED THREATS</span>
+            <h2 class="card-title">🚫 DAFTAR IP DIBLOKIR (FAIL2BAN JAIL)</h2>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="cyber-table" id="jailedTable">
+                <thead>
+                  <tr>
+                    <th>IP ADDRESS</th>
+                    <th>ALASAN PENJARA / BLOKIR</th>
+                    <th>WAKTU DIHUKUM</th>
+                    <th>KEDALUWARSA BLOKIR</th>
+                    <th>AKSI</th>
+                  </tr>
+                </thead>
+                <tbody id="jailedTableBody">
+                  <tr>
+                    <td colspan="5" class="text-center text-green">Tidak ada IP yang sedang dijebloskan ke penjara Fail2Ban.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: AI CONFIGURATION ================= -->
+      <section class="tab-pane" id="tab-ai">
+        <div class="cyber-card">
+          <div class="card-header">
+            <span class="card-tag">NEURAL SYNAPSE</span>
+            <h2 class="card-title">KONFIGURASI CHATGPT & GEMINI AI</h2>
+          </div>
+          <div class="card-body">
+            <div class="grid-2-col">
+              <!-- AI Provider & Keys -->
+              <div class="form-col">
+                <div class="form-group">
+                  <label>PILIHAN ENGINE AI UTAMA</label>
+                  <select id="settingAiProvider" class="cyber-select">
+                    <option value="auto">Adaptive Auto-Failover (ChatGPT -> Gemini -> Free Engine)</option>
+                    <option value="openai">OpenAI ChatGPT Only (GPT-4o / GPT-4o-mini)</option>
+                    <option value="gemini">Google Gemini Only (Gemini 1.5 Flash / Pro)</option>
+                  </select>
+                  <small class="hint">Jika tidak memiliki API key, sistem otomatis memakai Free Quantum NLP Engine tanpa error!</small>
+                </div>
+
+                <div class="form-group">
+                  <label>OPENAI API KEY (CHATGPT)</label>
+                  <div class="input-with-action">
+                    <input type="password" id="settingOpenaiKey" placeholder="sk-proj-xxxxxxxxxxxxxxxxxxxx" class="cyber-input">
+                    <button type="button" class="btn-toggle-eye" onclick="togglePasswordVisibility('settingOpenaiKey')">👁️</button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>OPENAI MODEL</label>
+                  <select id="settingOpenaiModel" class="cyber-select">
+                    <option value="gpt-4o-mini">gpt-4o-mini (Cepat, Ringan & Ekonomis - Direkomendasikan)</option>
+                    <option value="gpt-4o">gpt-4o (Kemampuan Penalaran Tertinggi)</option>
+                    <option value="gpt-3.5-turbo">gpt-3.5-turbo (Klasik)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>GOOGLE GEMINI API KEY</label>
+                  <div class="input-with-action">
+                    <input type="password" id="settingGeminiKey" placeholder="AIzaSyxxxxxxxxxxxxxxxxxxxx" class="cyber-input">
+                    <button type="button" class="btn-toggle-eye" onclick="togglePasswordVisibility('settingGeminiKey')">👁️</button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>GEMINI MODEL</label>
+                  <select id="settingGeminiModel" class="cyber-select">
+                    <option value="gemini-flash-lite-latest">gemini-flash-lite-latest (Super Cepat & Direkomendasikan)</option>
+                    <option value="gemini-3.5-flash">gemini-3.5-flash (Generasi Terkini)</option>
+                    <option value="gemini-flash-latest">gemini-flash-latest</option>
+                    <option value="gemini-3.8-flash">gemini-3.8-flash</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- AI Behavior & Persona Prompt -->
+              <div class="form-col">
+                <div class="form-group">
+                  <label>PERILAKU AUTO-BALASAN AI</label>
+                  <div class="toggle-switch-group">
+                    <label class="cyber-switch">
+                      <input type="checkbox" id="settingAutoAiPrivate">
+                      <span class="slider"></span>
+                    </label>
+                    <span class="switch-label">Auto-Reply AI di Chat Pribadi (Menjawab semua pertanyaan tanpa prefix)</span>
+                  </div>
+
+                  <div class="toggle-switch-group" style="margin-top: 15px;">
+                    <label class="cyber-switch">
+                      <input type="checkbox" id="settingAutoAiGroup">
+                      <span class="slider"></span>
+                    </label>
+                    <span class="switch-label">Auto-Reply AI di Grup (Menjawab pesan grup tanpa perlu di-tag)</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>PREFIX PERINTAH BOT</label>
+                  <input type="text" id="settingPrefix" maxlength="3" class="cyber-input" style="max-width: 120px;" placeholder=".">
+                </div>
+
+                <div class="form-group">
+                  <label>ANTI-SPAM RATE LIMIT COOLDOWN (MILIDETIK)</label>
+                  <input type="number" id="settingCooldown" min="500" max="10000" step="500" class="cyber-input" placeholder="1500">
+                  <small class="hint">Melindungi bot dan HP dari flood pesan.</small>
+                </div>
+
+                <div class="form-group">
+                  <label>AI SYSTEM PROMPT (PERSONA & KEPRIBADIAN NOVA)</label>
+                  <textarea id="settingSystemPrompt" rows="4" class="cyber-textarea" placeholder="Definisikan bagaimana AI bersikap..."></textarea>
+                </div>
+
+                <button class="btn-cyber-primary" id="btnSaveSettings">💾 SIMPAN SEMUA SETELAN AI</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: DATABASE & CITIZENS ================= -->
+      <section class="tab-pane" id="tab-database">
+        <div class="cyber-card">
+          <div class="card-header">
+            <span class="card-tag">ENCRYPTED REPOSITORY</span>
+            <h2 class="card-title">DATA PENGGUNA & EKONOMI CYBER</h2>
+          </div>
+          <div class="card-body">
+            <div class="table-actions">
+              <input type="text" id="userSearchInput" placeholder="Cari nama atau nomor user..." class="cyber-input" style="max-width: 300px;">
+              <button class="btn-cyber-cyan" id="btnRefreshUsers">🔄 REFRESH DATA</button>
+            </div>
+            <div class="table-responsive">
+              <table class="cyber-table" id="usersTable">
+                <thead>
+                  <tr>
+                    <th>USER / NOMOR</th>
+                    <th>RANK & LEVEL</th>
+                    <th>KOIN CYBER</th>
+                    <th>EXP</th>
+                    <th>HP</th>
+                    <th>ROLE</th>
+                    <th>STATUS</th>
+                    <th>AKSI</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center">Memuat data dari database terenkripsi...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="cyber-card" style="margin-top: 25px;">
+          <div class="card-header">
+            <span class="card-tag">SECTOR REGISTRY</span>
+            <h2 class="card-title">DATA GRUP WHATSAPP TERHUBUNG</h2>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="cyber-table" id="groupsTable">
+                <thead>
+                  <tr>
+                    <th>NAMA SEKTOR GRUP</th>
+                    <th>GROUP ID</th>
+                    <th>PROTEKSI ANTILINK</th>
+                    <th>AUTO WELCOME</th>
+                    <th>AUTO AI GRUP</th>
+                  </tr>
+                </thead>
+                <tbody id="groupsTableBody">
+                  <tr>
+                    <td colspan="5" class="text-center">Belum ada grup yang tercatat. Masukkan bot ke grup untuk mendaftar!</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: LIVE MATRIX LOGS ================= -->
+      <section class="tab-pane" id="tab-logs">
+        <div class="cyber-card terminal-card">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">NOVA_TERMINAL_STREAM // MATRIX LOGS</div>
+            <button class="btn-clear-term" id="btnClearLogs">BERSIHKAN TERMINAL</button>
+          </div>
+          <div class="terminal-body" id="terminalLogs">
+            <div class="log-entry log-system">
+              <span class="log-time">[SYSTEM]</span> Quantum Terminal siap mendengarkan transmisi data...
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: FITUR & SIMULATOR ================= -->
+      <section class="tab-pane" id="tab-features">
+        <div class="cyber-card">
+          <div class="card-header">
+            <span class="card-tag">CAPABILITY MATRIX</span>
+            <h2 class="card-title">KATALOG FITUR LENGKAP BOT</h2>
+          </div>
+          <div class="card-body">
+            <!-- Interactive Command Simulator -->
+            <div class="cyber-card" style="margin-bottom: 25px; border-color: var(--neon-cyan);">
+              <div class="card-header">
+                <span class="card-tag">SIMULATION PROTOCOL</span>
+                <h3 class="card-title">⚡ CYBER COMMAND SIMULATOR & TESTER</h3>
+              </div>
+              <div class="card-body">
+                <p style="color: var(--text-dim); margin-bottom: 12px; font-size: 0.9rem;">
+                  Ketik atau klik contoh perintah di bawah untuk menguji respon bot langsung di web:
+                </p>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                  <input type="text" id="simCommandInput" class="cyber-input" placeholder="Contoh: .menu, .khodam Budi, .delayhard max, .fancy Cyber" style="flex: 1;">
+                  <button class="btn-cyber-primary" id="btnRunSimCommand">🚀 RUN PERINTAH</button>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.menu'; document.getElementById('btnRunSimCommand').click();">.menu</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.rvo'; document.getElementById('btnRunSimCommand').click();">.rvo (Buka 1x Lihat)</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.qrcode https://cyber-nova-2099.ai'; document.getElementById('btnRunSimCommand').click();">.qrcode</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.think Mengapa langit berwarna biru?'; document.getElementById('btnRunSimCommand').click();">.think (Deep Reasoning)</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.animeprompt cyberpunk ninja'; document.getElementById('btnRunSimCommand').click();">.animeprompt</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.hack 6281234567890'; document.getElementById('btnRunSimCommand').click();">.hack</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.shield'; document.getElementById('btnRunSimCommand').click();">.shield</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.inspect 6282183317690'; document.getElementById('btnRunSimCommand').click();">.inspect</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.delayhard max'; document.getElementById('btnRunSimCommand').click();">.delayhard max</button>
+                  <button class="btn-chip" onclick="document.getElementById('simCommandInput').value='.firewall'; document.getElementById('btnRunSimCommand').click();">.firewall</button>
+                </div>
+                <div class="terminal-body" id="simResultBox" style="min-height: 100px; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.7); border: 1px dashed var(--neon-cyan); padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #a6e22e; white-space: pre-wrap;">
+[SIMULATOR READY] Masukkan perintah atau klik salah satu tombol di atas untuk melihat respon bot...
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-3-col">
+              <!-- Box 0: Media & View-Once & QR Tools -->
+              <div class="feature-box" style="border-color: #00f2fe;">
+                <div class="feat-icon">📸</div>
+                <h3>Media, View-Once & QR</h3>
+                <ul>
+                  <li><code>.rvo</code> / <code>.lihat</code> - Buka & Download Foto 1x Lihat</li>
+                  <li><code>.scanqr</code> / <code>.readqr</code> - Scan & Baca QR Code dari Foto</li>
+                  <li><code>.qrcode &lt;teks&gt;</code> - Generator QR Code Neon</li>
+                  <li><code>.askimg &lt;tanya&gt;</code> - Analisis Gambar Multimodal Vision</li>
+                  <li><code>.deepseek &lt;tanya&gt;</code> - Deep Reasoning AI (Chain of Thought)</li>
+                  <li><code>.animeprompt &lt;ide&gt;</code> - Prompt Masterpiece Anime 8k</li>
+                  <li><code>.audit &lt;kode&gt;</code> - Audit Keamanan & Bug Program</li>
+                </ul>
+              </div>
+
+              <!-- Box 1: Core AI -->
+              <div class="feature-box">
+                <div class="feat-icon">🤖</div>
+                <h3>Artificial Intelligence</h3>
+                <ul>
+                  <li><code>.ai &lt;tanya&gt;</code> - Tanya Jawab Cerdas (Gemini 2026)</li>
+                  <li><code>.img &lt;prompt&gt;</code> - Generator Gambar AI Flux</li>
+                  <li><code>.ai-voice &lt;teks&gt;</code> - Voice Note Suara AI</li>
+                  <li><code>.prompt &lt;ide&gt;</code> - AI Prompt Enhancer</li>
+                  <li><code>.poem &lt;tema&gt;</code> - Generator Puisi & Lirik</li>
+                  <li><code>.roast &lt;nama&gt;</code> - Roasting Humor Pedas</li>
+                  <li><code>.puji &lt;nama&gt;</code> - Pujian Gombalan AI</li>
+                  <li><code>.story &lt;tema&gt;</code> - Cerita Fiksi Ilmiah</li>
+                  <li><code>.code &lt;bhs&gt; &lt;tugas&gt;</code> - Bikin Kode</li>
+                  <li><code>.grammar &lt;teks&gt;</code> - Koreksi Tata Bahasa</li>
+                  <li><code>.explain &lt;topik&gt;</code> - Penjelasan Simple (ELI5)</li>
+                  <li><code>.regex &lt;pola&gt;</code> - Generator Regex Koding</li>
+                  <li><code>.mathsolve &lt;soal&gt;</code> - Solusi Matematika</li>
+                  <li><code>.modeai on/off</code> - Toggle Auto AI</li>
+                </ul>
+              </div>
+
+              <!-- Box 2: Cyber Attack, Defense & Anti-Crash -->
+              <div class="feature-box" style="border-color: #ff3366;">
+                <div class="feat-icon">⚔️</div>
+                <h3>Cyber Attack & Defense</h3>
+                <ul>
+                  <li><code>.hack @user</code> - Serangan Infiltrasi Cyber & Curi Koin</li>
+                  <li><code>.emp @user</code> - Lumpuhkan Shield Target</li>
+                  <li><code>.shield</code> - Pasang Quantum Barrier Pertahanan</li>
+                  <li><code>.inspect @user</code> - Forensik Scan Tingkat Risiko</li>
+                  <li><code>.strike @user &lt;alasan&gt;</code> - Beri Sanksi Pelanggaran</li>
+                  <li><code>.lockdown on/off</code> - Kunci Darurat Transmisi Grup</li>
+                  <li><code>.delayhard on/off/max</code> - Proteksi Anti-Crash HP</li>
+                  <li><code>.crash &lt;nomor&gt;</code> - Counter-Strike Beku Spammer</li>
+                  <li><code>.clearchat</code> - Bersihkan Cache & Memori Buffer</li>
+                  <li><code>.firewall</code> - Status Firewall & Telemetry</li>
+                </ul>
+              </div>
+
+              <!-- Box 3: Werewolf & Fun Games -->
+              <div class="feature-box">
+                <div class="feat-icon">🐺</div>
+                <h3>Game & Werewolf</h3>
+                <ul>
+                  <li><code>.ww create/join/start</code> - Werewolf Grup</li>
+                  <li><code>.tebakgambar</code> - Tebak Gambar Berhadiah</li>
+                  <li><code>.caklontong</code> - Kuis Logika Cak Lontong</li>
+                  <li><code>.tebakbendera</code> - Tebak Bendera Negara</li>
+                  <li><code>.tebakkimia</code> - Kuis Simbol Kimia</li>
+                  <li><code>.tebakangka</code> - Tebak Angka 1-100</li>
+                  <li><code>.tebakkata</code> - Susun Kata Acak</li>
+                  <li><code>.kuismtk</code> - Kuis Matematika Kilat</li>
+                  <li><code>.slot [bet]</code> - Kasino Slot 3 Simbol</li>
+                  <li><code>.rpg</code> - Petualangan Luar Angkasa</li>
+                  <li><code>.mining</code> - Tambang Token Kripto</li>
+                  <li><code>.dadu</code> &amp; <code>.coinflip</code> - Lempar Dadu/Koin</li>
+                  <li><code>.wheel &lt;a, b&gt;</code> - Roda Putar Undian</li>
+                  <li><code>.roulette</code> - Russian Roulette Menantang</li>
+                  <li><code>.suit &lt;b/g/k&gt;</code> - Adu Suit vs AI</li>
+                </ul>
+              </div>
+
+              <!-- Box 4: Fun & Radar -->
+              <div class="feature-box">
+                <div class="feat-icon">🔮</div>
+                <h3>Fun & Khodam Radar</h3>
+                <ul>
+                  <li><code>.khodam &lt;nama&gt;</code> - Cek Khodam Cyber</li>
+                  <li><code>.jodoh &lt;A&gt; &amp; &lt;B&gt;</code> - Radar Asmara</li>
+                  <li><code>.quote</code> - Mutiara Inspirasi</li>
+                  <li><code>.fakta</code> - Fakta Unik Sains</li>
+                </ul>
+              </div>
+
+              <!-- Box 5: Lifestyle & Religi -->
+              <div class="feature-box">
+                <div class="feat-icon">🌙</div>
+                <h3>Lifestyle & Religi</h3>
+                <ul>
+                  <li><code>.quran &lt;surah:ayat&gt;</code> - Ayat Al-Qur'an</li>
+                  <li><code>.asmaulhusna</code> - 99 Nama Allah</li>
+                  <li><code>.doa &lt;nama doa&gt;</code> - Kumpulan Doa</li>
+                  <li><code>.gempa</code> - Info Gempa Terkini BMKG</li>
+                  <li><code>.wiki &lt;pencarian&gt;</code> - Ensiklopedia Wikipedia</li>
+                  <li><code>.kbbi &lt;kata&gt;</code> - Kamus Besar Bahasa ID</li>
+                  <li><code>.kurs &lt;valas&gt;</code> - Nilai Tukar Kurs</li>
+                  <li><code>.resep &lt;makanan&gt;</code> - Resep Masakan Nusantara</li>
+                  <li><code>.cuaca &lt;kota&gt;</code> - Radar Cuaca</li>
+                  <li><code>.sholat &lt;kota&gt;</code> - Jadwal Sholat</li>
+                </ul>
+              </div>
+
+              <!-- Box 6: Text & Cyber Tools -->
+              <div class="feature-box">
+                <div class="feat-icon">🛠️</div>
+                <h3>Text & Dev Tools</h3>
+                <ul>
+                  <li><code>.fancy &lt;teks&gt;</code> - Font Aesthetic & Cyber</li>
+                  <li><code>.morse &amp; .demorse</code> - Sandi Kode Morse</li>
+                  <li><code>.binary &amp; .debinary</code> - Konversi Biner 0101</li>
+                  <li><code>.base64 &amp; .debase64</code> - Base64 Enkripsi</li>
+                  <li><code>.reverse &lt;teks&gt;</code> - Balik Urutan Huruf</li>
+                  <li><code>.mock &lt;teks&gt;</code> - Gaya Teks Spongebob</li>
+                  <li><code>.passgen [panjang]</code> - Password Kuat Generator</li>
+                  <li><code>.uuid</code> - Generator UUID v4</li>
+                  <li><code>.count &lt;teks&gt;</code> - Hitung Huruf & Kata</li>
+                  <li><code>.qrcode &lt;teks&gt;</code> - Generator Gambar QR</li>
+                  <li><code>.shortlink &lt;url&gt;</code> - Pemendek Link</li>
+                  <li><code>.tts &lt;teks&gt;</code> - Teks ke Suara Audio</li>
+                  <li><code>.ping</code> / <code>.speed</code> - Cek Latency & RAM</li>
+                  <li><code>.afk &lt;alasan&gt;</code> - Pasang Status AFK</li>
+                </ul>
+              </div>
+
+              <!-- Box 7: Ekonomi & Admin Koin -->
+              <div class="feature-box">
+                <div class="feat-icon">💳</div>
+                <h3>Ekonomi & Admin Koin</h3>
+                <ul>
+                  <li><code>.addcoin @user &lt;jml&gt;</code> - [Admin] Tambah Koin</li>
+                  <li><code>.delcoin @user &lt;jml&gt;</code> - [Admin] Tarik Koin</li>
+                  <li><code>.setcoin @user &lt;jml&gt;</code> - [Owner] Atur Saldo</li>
+                  <li><code>.setrole @user &lt;role&gt;</code> - [Owner] Ganti Role</li>
+                  <li><code>.transfer @user &lt;jml&gt;</code> - Kirim Koin ke Teman</li>
+                  <li><code>.shop &amp; .buy &lt;item&gt;</code> - Belanja Item Toko</li>
+                  <li><code>.daily</code> - Bonus Koin Harian</li>
+                  <li><code>.leaderboard</code> - Top 10 Sultan Koin</li>
+                  <li><code>.profile</code> / <code>.me</code> - Kartu Status User</li>
+                </ul>
+              </div>
+
+              <!-- Box 8: Supreme Owner Controls -->
+              <div class="feature-box" style="border-color: #ffd700;">
+                <div class="feat-icon">👑</div>
+                <h3>Supreme Owner Controls</h3>
+                <ul>
+                  <li><code>.eval &lt;kode js&gt;</code> - Eksekusi JS Live</li>
+                  <li><code>.exec &lt;cmd&gt;</code> - Jalankan Terminal OS</li>
+                  <li><code>.backup</code> - Cadangkan Database Bot</li>
+                  <li><code>.broadcast &lt;pesan&gt;</code> - Siar ke Seluruh Grup</li>
+                  <li><code>.join &lt;link&gt;</code> - Masukkan Bot ke Grup</li>
+                  <li><code>.leave</code> - Keluarkan Bot dari Grup</li>
+                  <li><code>.ban &amp; .unban @user</code> - Blokir Akses User</li>
+                  <li><code>.resetuser @user</code> - Reset Akun Pengguna</li>
+                  <li><code>.mode self/public</code> - Saklar Privasi Bot</li>
+                </ul>
+              </div>
+
+              <!-- Box 9: Moderasi Grup -->
+              <div class="feature-box">
+                <div class="feat-icon">👥</div>
+                <h3>Moderasi Grup</h3>
+                <ul>
+                  <li><code>.tagall &lt;pesan&gt;</code> - Mention Seluruh Member</li>
+                  <li><code>.hidetag &lt;pesan&gt;</code> - Pengumuman Tersembunyi</li>
+                  <li><code>.antilink on/off</code> - Hapus Link Grup Luar</li>
+                  <li><code>.group open/close</code> - Kunci / Buka Chat</li>
+                  <li><code>.kick @user</code> - Tendang Pelanggar</li>
+                  <li><code>.promote &amp; .demote</code> - Ubah Admin Grup</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal Edit Saldo Koin -->
+  <div class="cyber-modal-overlay" id="coinModalOverlay" style="display: none;">
+    <div class="cyber-modal">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 KELOLA SALDO CITIZEN</h3>
+        <button class="btn-close-modal" id="btnCloseCoinModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>NAMA USER</label>
+          <input type="text" id="modalUserName" class="cyber-input" readonly>
+        </div>
+        <div class="form-group">
+          <label>AKSI SALDO</label>
+          <select id="modalAction" class="cyber-select">
+            <option value="add">Tambah Saldo Koin (+)</option>
+            <option value="set">Atur Nominal Koin Langsung (=)</option>
+            <option value="deduct">Potong Saldo Koin (-)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>JUMLAH KOIN</label>
+          <input type="number" id="modalCoinAmount" class="cyber-input" placeholder="Contoh: 10000" min="0">
+        </div>
+        <div class="form-group">
+          <label>ROLE / PANGKAT USER</label>
+          <select id="modalRole" class="cyber-select">
+            <option value="CITIZEN">CITIZEN (Warga Biasa)</option>
+            <option value="VIP">VIP (Warga Kehormatan)</option>
+            <option value="ADMIN">ADMIN (Pengelola Sistem)</option>
+            <option value="OWNER">OWNER (Pemilik Utama)</option>
+          </select>
+        </div>
+        <input type="hidden" id="modalUserId">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cyber-primary" id="btnSaveUserCoins">💾 SIMPAN PERUBAHAN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

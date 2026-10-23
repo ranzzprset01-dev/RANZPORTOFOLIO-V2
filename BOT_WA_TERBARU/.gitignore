@@ -1,0 +1,35 @@
+# Dependencies
+/node_modules/
+
+# Environment variables
+.env
+
+# Session files
+/auth_session/
+/auth_ranzzstore/
+
+# Database
+/data/
+
+# Logs
+/logs/
+*.log
+
+# IP Logs
+/ip-log.txt
+
+# Temporary files
+/temp/
+
+# Cloudflare
+cloudflared.exe
+cloudflared-amd64.pkg
+yt-dlp.exe
+
+# Legacy, unreviewed feature bundles
+/CLICK_HERE/
+/fitur_baru/
+
+# OS
+.DS_Store
+Thumbs.db

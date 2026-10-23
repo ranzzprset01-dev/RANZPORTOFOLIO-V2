@@ -1,0 +1,41 @@
+{
+  "name": "ranzzxiter-whatsapp-bot",
+  "version": "2.0.0",
+  "description": "RANZZXITER WhatsApp AI bot with interactive menus and local command center",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "whatsapp-bot",
+    "baileys",
+    "chatgpt",
+    "gemini",
+    "ai-bot",
+    "ranzzxiter",
+    "dashboard"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT",
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@whiskeysockets/baileys": "^6.7.9",
+    "axios": "^1.6.8",
+    "canvas": "^2.11.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jpeg-js": "^0.4.4",
+    "jsqr": "^1.4.0",
+    "node-cache": "^5.1.2",
+    "pino": "^9.0.0",
+    "pino-pretty": "^11.0.0",
+    "qrcode": "^1.5.3",
+    "qrcode-terminal": "^0.12.0",
+    "socket.io": "^4.7.5"
+  }
+}
