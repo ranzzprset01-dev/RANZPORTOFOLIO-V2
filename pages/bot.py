@@ -217,10 +217,12 @@ if platform.system() != "Windows":
         st.button("■  Hentikan bot", disabled=True, width="stretch")
     with status_col:
         st.metric("Status", "Kontrol lokal saja")
+        st.link_button("Buka dashboard bot · port 3000 ↗", BOT_URL, width="stretch")
         st.caption(
             "Aplikasi ini sedang berjalan di server Streamlit Cloud. "
-            "Cloud tidak dapat menyalakan proses di laptop Anda. Jalankan home.py "
-            "di Windows untuk mengaktifkan tombol kontrol."
+            "Tautan membuka port lokal laptop ini dan hanya berfungsi jika bot sudah "
+            "berjalan di laptop yang sama. Cloud tidak dapat menyalakan bot. Jalankan "
+            "home.py di Windows untuk mengaktifkan tombol kontrol."
         )
 else:
     manager = get_bot_manager()
@@ -279,9 +281,8 @@ else:
                 st.rerun()
     with status_col:
         st.metric("Status bot", "Berjalan" if running else "Berhenti")
-        if running:
-            st.link_button("Buka dashboard bot ↗", BOT_URL, width="stretch")
-        else:
+        st.link_button("Buka dashboard bot · port 3000 ↗", BOT_URL, width="stretch")
+        if not running:
             st.caption("Bot berjalan di laptop ini saja, bukan di Streamlit Cloud.")
 
 if "bot_last_exit_code" in st.session_state:
