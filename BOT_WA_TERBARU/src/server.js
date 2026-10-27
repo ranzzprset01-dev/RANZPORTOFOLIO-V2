@@ -44,7 +44,10 @@ security.setSocketIO(io);
 bot.setSocketIO(io);
 
 // 1. Sembunyikan Header & Pasang Anti-Flood / Fail2Ban / IP Tracker Middleware
-app.use(helmet());
+const helmetOptions = process.env.DASHBOARD_LAN_HTTP === 'true'
+  ? { contentSecurityPolicy: { directives: { 'upgrade-insecure-requests': null } } }
+  : {};
+app.use(helmet(helmetOptions));
 app.use(security.createMiddleware());
 
 // 2. Rate Limit untuk HTTP requests (100 req per 15 menit per IP)

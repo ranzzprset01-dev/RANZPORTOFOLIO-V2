@@ -97,6 +97,7 @@ def start_local_bot(manager):
     environment.update(
         {
             "ENABLE_CLOUDFLARE_TUNNEL": "false",
+            "DASHBOARD_LAN_HTTP": "true",
             "HOST": bot_host,
             "PORT": "3000",
         }
